@@ -64,6 +64,9 @@ $socios = $stmt->fetchAll();
 
   <div class="d-flex mb-3 gap-2">
     <a href="agregar_socio.php" class="btn btn-success">Agregar Socio</a>
+
+    <!-- NUEVO: Botón a sección de registro -->
+    <a href="registro.php" class="btn btn-warning">Registro de Socio</a>
     <!-- Toggle orden por días -->
     <?php
       // Construir URL de toggle sin mutar baseParams
