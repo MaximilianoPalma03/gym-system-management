@@ -1,5 +1,11 @@
 <?php
+session_start();
 require_once 'bdd.php';
+
+// Mensaje flash (si existe)
+$msg = $_SESSION['msg'] ?? null;
+unset($_SESSION['msg']);
+
 
 // Parámetros de paginación
 $porPagina = 20;
@@ -60,6 +66,13 @@ $socios = $stmt->fetchAll();
 </head>
 <body class="bg-light">
 <div class="container mt-4">
+   <!-- Mensaje flash -->
+  <?php if ($msg): ?>
+    <div class="alert alert-<?= htmlspecialchars($msg['type']) ?> alert-dismissible fade show" role="alert">
+      <?= htmlspecialchars($msg['text']) ?>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+  <?php endif; ?>
   <h1 class="mb-4">Socios del Gimnasio</h1>
 
   <div class="d-flex mb-3 gap-2">
@@ -162,5 +175,19 @@ $socios = $stmt->fetchAll();
     </ul>
   </nav>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Ocultar automáticamente la alerta tras 5 segundos
+  (function() {
+    const alertEl = document.querySelector('.alert');
+    if (!alertEl) return;
+    setTimeout(() => {
+      const bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
+      bsAlert.close();
+    }, 5000);
+  })();
+</script>
+
 </body>
 </html>

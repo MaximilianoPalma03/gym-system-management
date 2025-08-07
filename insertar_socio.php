@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once 'bdd.php';
 
 if (
@@ -31,6 +32,11 @@ if (
             ':fi'  => $inscripcion,
             ':fv'  => $vencimiento
         ]);
+
+        $_SESSION['msg'] = [
+        'type' => 'success',
+        'text' => 'Socio agregado correctamente.'
+    ];
 
         header('Location: index.php');
         exit;
