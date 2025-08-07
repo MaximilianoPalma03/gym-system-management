@@ -1,108 +1,163 @@
 <?php
 require_once 'bdd.php';
 
-// Trae todos los vehículos
-$sql = "SELECT * FROM vehiculos";
-$stmt = $conexion->prepare($sql);
-$stmt->execute();
-$vehiculos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-?>
+// Parámetros de paginación
+$porPagina = 20;
+$pagina = isset($_GET['p']) && ctype_digit($_GET['p']) && $_GET['p'] > 0
+    ? intval($_GET['p'])
+    : 1;
+$offset = ($pagina - 1) * $porPagina;
 
+// Base de parámetros para mantener filtro y orden al paginar
+$baseParams = $_GET;
+
+// Parámetros de filtro y orden
+$filtroDni = isset($_GET['dni']) && ctype_digit($_GET['dni']) ? $_GET['dni'] : null;
+$ordenDias = isset($_GET['orden']) && $_GET['orden'] === 'dias';
+
+// Preparar cláusula ORDER BY
+$orderClause = $ordenDias
+    ? "dias_restantes ASC, apellido, nombre"
+    : "apellido, nombre";
+
+// 1) Contar total de socios
+$countSql = "SELECT COUNT(*) FROM socios";
+$countParams = [];
+if ($filtroDni) {
+    $countSql .= " WHERE dni = :dni";
+    $countParams[':dni'] = $filtroDni;
+}
+$countStmt = $conexion->prepare($countSql);
+$countStmt->execute($countParams);
+$totalSocios = $countStmt->fetchColumn();
+$totalPaginas = max(1, ceil($totalSocios / $porPagina));
+
+// 2) Traer datos de esta página
+$sql = "
+  SELECT *,
+    DATEDIFF(fecha_vencimiento, CURRENT_DATE()) AS dias_restantes
+  FROM socios
+" . ($filtroDni ? " WHERE dni = :dni" : "") . "
+  ORDER BY $orderClause
+  LIMIT :limit OFFSET :offset
+";
+$stmt = $conexion->prepare($sql);
+if ($filtroDni) {
+    $stmt->bindValue(':dni', $filtroDni, PDO::PARAM_STR);
+}
+$stmt->bindValue(':limit', $porPagina, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
+$socios = $stmt->fetchAll();
+?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Listado de Vehículos</title>
+  <title>Socios del Gimnasio</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .modo-edicion .btn-warning,
-    .modo-edicion .btn-danger {
-      display: inline-block !important;
-    }
-    .btn-warning, .btn-danger {
-      display: none;
-    }
-  </style>
 </head>
-<body>
-
+<body class="bg-light">
 <div class="container mt-4">
-  <h1 class="mb-4">Listado de Vehículos</h1>
+  <h1 class="mb-4">Socios del Gimnasio</h1>
 
-  <div class="d-flex justify-content-between mb-3">
-    <a href="agregar.php" class="btn btn-success">Agregar nuevo vehículo</a>
-    <button class="btn btn-primary" onclick="document.body.classList.toggle('modo-edicion')">
-      Editar tabla
-    </button>
+  <div class="d-flex mb-3 gap-2">
+    <a href="agregar_socio.php" class="btn btn-success">Agregar Socio</a>
+    <!-- Toggle orden por días -->
+    <?php
+      // Construir URL de toggle sin mutar baseParams
+      $toggleParams = $baseParams;
+      if ($ordenDias) {
+          unset($toggleParams['orden']);
+          $label = 'Desordenar';
+          $btnClass = 'btn-outline-secondary';
+      } else {
+          $toggleParams['orden'] = 'dias';
+          $label = 'Ordenar por Vencimiento';
+          $btnClass = 'btn-primary';
+      }
+      $toggleUrl = basename(__FILE__) . '?' . http_build_query($toggleParams);
+    ?>
+    <a href="<?= $toggleUrl ?>" class="btn <?= $btnClass ?>"><?= $label ?></a>
+
+    <!-- Búsqueda por DNI -->
+    <form method="get" class="d-flex ms-auto">
+      <?php if ($ordenDias): ?>
+        <input type="hidden" name="orden" value="dias">
+      <?php endif; ?>
+      <input
+        type="text"
+        name="dni"
+        class="form-control me-2"
+        placeholder="Buscar por DNI"
+        value="<?= htmlspecialchars($filtroDni ?? '') ?>"
+      >
+      <button type="submit" class="btn btn-primary">Buscar</button>
+      <?php if ($filtroDni): ?>
+        <a href="index.php<?= $ordenDias ? '?orden=dias' : '' ?>" class="btn btn-outline-secondary ms-2">Limpiar</a>
+      <?php endif; ?>
+    </form>
   </div>
 
   <table class="table table-bordered table-hover">
     <thead class="table-dark">
       <tr>
-        <th>ID</th>
-        <th>Marca</th>
-        <th>Modelo</th>
-        <th>Año</th>
-        <th>Color</th>
-        <th>Precio</th>
-        <th>Tipo</th>
-        <th>Acciones</th>
+        <th>Nombre</th><th>Apellido</th><th>DNI</th>
+        <th>Inscripción</th><th>Vencimiento</th><th>Días Rest.</th><th>Acciones</th>
       </tr>
     </thead>
     <tbody>
-      <?php foreach ($vehiculos as $vehiculo): ?>
-        <tr>
-          <td><?= htmlspecialchars($vehiculo['id']) ?></td>
-          <td><?= htmlspecialchars($vehiculo['marca']) ?></td>
-          <td><?= htmlspecialchars($vehiculo['modelo']) ?></td>
-          <td><?= htmlspecialchars($vehiculo['anio']) ?></td>
-          <td><?= htmlspecialchars($vehiculo['color']) ?></td>
-          <td>$<?= htmlspecialchars($vehiculo['precio']) ?></td>
-          <td><?= htmlspecialchars($vehiculo['tipo']) ?></td>
-          <td>
-            <a href="editar.php?id=<?= $vehiculo['id'] ?>"
-               class="btn btn-sm btn-warning">Editar</a>
-            <button class="btn btn-sm btn-danger"
-                    onclick="confirmarEliminacion(<?= $vehiculo['id'] ?>)">
-              Eliminar
-            </button>
-          </td>
-        </tr>
+      <?php foreach ($socios as $s): ?>
+      <tr>
+        <td><?= htmlspecialchars($s['nombre']) ?></td>
+        <td><?= htmlspecialchars($s['apellido']) ?></td>
+        <td><?= htmlspecialchars($s['dni']) ?></td>
+        <td><?= DateTime::createFromFormat('Y-m-d', $s['fecha_inscripcion'])->format('d/m/Y') ?></td>
+        <td><?= DateTime::createFromFormat('Y-m-d', $s['fecha_vencimiento'])->format('d/m/Y') ?></td>
+        <td>
+          <?= $s['dias_restantes'] >= 0
+                ? $s['dias_restantes'] . ' días'
+                : 'Venció hace ' . abs($s['dias_restantes']) . ' días' ?>
+        </td>
+        <td>
+          <a href="editar_socio.php?id=<?= $s['id'] ?>" class="btn btn-sm btn-warning">Editar</a>
+          <a href="confirmar_eliminar.php?id=<?= $s['id'] ?>" class="btn btn-sm btn-danger">Eliminar</a>
+        </td>
+      </tr>
       <?php endforeach; ?>
     </tbody>
   </table>
-</div>
 
-<!-- Modal de confirmación de eliminación -->
-<div class="modal fade" id="modalEliminar" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form method="POST" action="eliminar.php" class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Confirmar eliminación</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        ¿Estás seguro de que deseas eliminar este vehículo?
-      </div>
-      <div class="modal-footer">
-        <input type="hidden" name="id" id="vehiculoAEliminar">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          Cancelar
-        </button>
-        <button type="submit" class="btn btn-danger">Eliminar</button>
-      </div>
-    </form>
-  </div>
+  <!-- Paginación -->
+  <nav aria-label="Paginación">
+    <ul class="pagination justify-content-center">
+      <?php
+        // Prefila parámetros para 'Anterior'
+        $prevParams = $baseParams;
+        $prevParams['p'] = max(1, $pagina - 1);
+      ?>
+      <li class="page-item <?= $pagina <= 1 ? 'disabled' : '' ?>">
+        <a class="page-link" href="?<?= http_build_query($prevParams) ?>">&laquo; Anterior</a>
+      </li>
+      <?php for ($i = 1; $i <= $totalPaginas; $i++):
+        $pageParams = $baseParams;
+        $pageParams['p'] = $i;
+      ?>
+      <li class="page-item <?= $i === $pagina ? 'active' : '' ?>">
+        <a class="page-link" href="?<?= http_build_query($pageParams) ?>"><?= $i ?></a>
+      </li>
+      <?php endfor; ?>
+      <?php
+        // Prefila parámetros para 'Siguiente'
+        $nextParams = $baseParams;
+        $nextParams['p'] = min($totalPaginas, $pagina + 1);
+      ?>
+      <li class="page-item <?= $pagina >= $totalPaginas ? 'disabled' : '' ?>">
+        <a class="page-link" href="?<?= http_build_query($nextParams) ?>">Siguiente &raquo;</a>
+      </li>
+    </ul>
+  </nav>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  function confirmarEliminacion(id) {
-    document.getElementById('vehiculoAEliminar').value = id;
-    const modal = new bootstrap.Modal(document.getElementById('modalEliminar'));
-    modal.show();
-  }
-</script>
 </body>
 </html>

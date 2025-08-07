@@ -1,26 +1,18 @@
 <?php
-// bdd.php
+// Establece la zona horaria correcta
+date_default_timezone_set('America/Argentina/Buenos_Aires');
 
 try {
-    // DSN: host, nombre de la base y charset
-    $dsn = "mysql:host=localhost;dbname=vehiculos;charset=utf8mb4";
-    // Usuario y contraseña (en XAMPP suele ser root y sin clave)
+    $dsn = "mysql:host=localhost;dbname=gimnasio;charset=utf8mb4";
     $user = "root";
     $pass = "";
-
-    // Opciones de PDO
     $options = [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // lanza PDOException
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // fetchAll sin especificar modo
-        PDO::ATTR_EMULATE_PREPARES   => false,                  // usa sentencias preparadas reales
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
     ];
-
-    // Crear la conexión
     $conexion = new PDO($dsn, $user, $pass, $options);
-
 } catch (PDOException $e) {
-    // Si hay error, lo mostramos y detenemos el script
-    echo "<h2>Error de conexión a la base de datos</h2>";
-    echo "<p>{$e->getMessage()}</p>";
+    echo "<h2>Error de conexión:</h2><p>{$e->getMessage()}</p>";
     exit;
 }
