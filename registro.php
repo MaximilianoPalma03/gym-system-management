@@ -1,5 +1,22 @@
 <?php
 require_once 'bdd.php';
+
+function safeFormatDate($fecha) {
+    if (empty($fecha)) return '-';
+    $d = DateTime::createFromFormat('Y-m-d', $fecha);
+    // Validar que parseó bien
+    if ($d && $d->format('Y-m-d') === $fecha) {
+        return $d->format('d/m/Y');
+    }
+    // fallback
+    try {
+        $d2 = new DateTime($fecha);
+        return $d2->format('d/m/Y');
+    } catch (Exception $e) {
+        return '-';
+    }
+}
+
 $result = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dni = $_POST['dni'] ?? '';
@@ -48,8 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p><strong>Nombre:</strong> <?=htmlspecialchars($result['nombre'])?></p>
             <p><strong>Apellido:</strong> <?=htmlspecialchars($result['apellido'])?></p>
             <p><strong>DNI:</strong> <?=htmlspecialchars($result['dni'])?></p>
-            <p><strong>Inscripción:</strong> <?= (new DateTime($result['fecha_inscripcion']))->format('d/m/Y') ?></p>
-            <p><strong>Vencimiento:</strong> <?= (new DateTime($result['fecha_vencimiento']))->format('d/m/Y') ?></p>
+            <p><strong>Inscripción:</strong> <?= safeFormatDate($result['fecha_inscripcion']) ?></p>
+            <p><strong>Vencimiento:</strong> <?= safeFormatDate($result['fecha_vencimiento']) ?></p>
             <p><strong>Días restantes:</strong> <?= $result['dias_restantes'] ?> días</p>
           </div>
         <?php endif; ?>

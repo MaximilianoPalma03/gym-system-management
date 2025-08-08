@@ -41,14 +41,17 @@ if (
         header('Location: index.php');
         exit;
     } catch (PDOException $e) {
-        // Código SQLSTATE 23000 = violación de restricción UNIQUE
-        if ($e->getCode() === '23000') {
-            echo "<p>Error: Ya existe un socio con el DNI $dni.</p>";
-            echo "<a href=\"agregar_socio.php\">Volver</a>";
-        } else {
-            echo "<p>Error al insertar: " . htmlspecialchars($e->getMessage()) . "</p>";
-        }
+    if ($e->getCode() === '23000') {
+        $_SESSION['msg'] = ['type' => 'danger', 'text' => "Ya existe un socio con el DNI $dni."];
+        header('Location: agregar_socio.php');
+        exit;
+    } else {
+        error_log('Error insertar_socio: ' . $e->getMessage());
+        $_SESSION['msg'] = ['type' => 'danger', 'text' => 'Error al insertar socio.'];
+        header('Location: agregar_socio.php');
+        exit;
     }
+}
 } else {
     echo "<p>Faltan datos obligatorios.</p><a href=\"agregar_socio.php\">Volver</a>";
 }

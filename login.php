@@ -1,12 +1,27 @@
 <?php
 session_start();
+
 $err = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($_POST['pass'] === 'gym123') {
+    // Contraseña que vos elegiste
+    $adminPassword = 'gym123';
+
+    if (isset($_POST['pass']) && $_POST['pass'] === $adminPassword) {
+        // Previene session fixation
+        session_regenerate_id(true);
         $_SESSION['admin'] = true;
-        header('Location: index.php'); exit;
+
+        // Mensaje flash
+        $_SESSION['msg'] = ['type' => 'success', 'text' => 'Acceso administrativo correcto.'];
+
+        header('Location: index.php');
+        exit;
     } else {
-        $err = 'Contraseña incorrecta.';
+        // Mensaje flash de error (opcional) o mostrar inline
+        $_SESSION['msg'] = ['type' => 'danger', 'text' => 'Contraseña incorrecta.'];
+        // redirigimos para que el mensaje se muestre por el sistema de flash
+        header('Location: login.php');
+        exit;
     }
 }
 ?>

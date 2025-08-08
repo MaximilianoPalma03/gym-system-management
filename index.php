@@ -2,6 +2,22 @@
 session_start();
 require_once 'bdd.php';
 
+function safeFormatDate($fecha) {
+    if (empty($fecha)) return '-';
+    $d = DateTime::createFromFormat('Y-m-d', $fecha);
+    // Validar que parseó bien
+    if ($d && $d->format('Y-m-d') === $fecha) {
+        return $d->format('d/m/Y');
+    }
+    // fallback
+    try {
+        $d2 = new DateTime($fecha);
+        return $d2->format('d/m/Y');
+    } catch (Exception $e) {
+        return '-';
+    }
+}
+
 // Mensaje flash (si existe)
 $msg = $_SESSION['msg'] ?? null;
 unset($_SESSION['msg']);
@@ -129,8 +145,8 @@ $socios = $stmt->fetchAll();
         <td><?= htmlspecialchars($s['nombre']) ?></td>
         <td><?= htmlspecialchars($s['apellido']) ?></td>
         <td><?= htmlspecialchars($s['dni']) ?></td>
-        <td><?= DateTime::createFromFormat('Y-m-d', $s['fecha_inscripcion'])->format('d/m/Y') ?></td>
-        <td><?= DateTime::createFromFormat('Y-m-d', $s['fecha_vencimiento'])->format('d/m/Y') ?></td>
+        <td><?= safeFormatDate($s['fecha_inscripcion']) ?></td>
+        <td><?= safeFormatDate($s['fecha_vencimiento']) ?></td>
         <td>
           <?= $s['dias_restantes'] >= 0
                 ? $s['dias_restantes'] . ' días'
