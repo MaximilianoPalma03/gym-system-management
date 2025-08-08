@@ -79,6 +79,25 @@ $socios = $stmt->fetchAll();
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Socios del Gimnasio</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+   <style>
+    .logo-gym {
+      width: 110px;
+      height: 110px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 1.2rem auto;
+      filter: drop-shadow(0 2px 12px #FFD70055);
+      background: #fff;
+      border-radius: 50%;
+      border: 3px solid #FFD700;
+      padding: 8px;
+    }
+    @media (max-width: 600px) {
+      .logo-gym { width: 80px; height: 80px; }
+    }
+  </style>
+
 </head>
 <body class="bg-light">
 <div class="container mt-4">
@@ -89,7 +108,9 @@ $socios = $stmt->fetchAll();
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
     </div>
   <?php endif; ?>
-  <h1 class="mb-4">Socios del Gimnasio</h1>
+<img src="logo gym.jpg" alt="Bull Gym Logo" class="logo-gym">
+
+  <h1 class="mb-4 text-center">Socios del Gimnasio</h1>
 
   <div class="d-flex mb-3 gap-2">
     <a href="agregar_socio.php" class="btn btn-success">Agregar Socio</a>
