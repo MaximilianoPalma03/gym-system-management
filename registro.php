@@ -200,10 +200,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </p>
       </div>
     <?php endif; ?>
-    <form method="post" autocomplete="off">
-      <input type="text" name="dni" class="form-control" placeholder="Ingrese DNI" required maxlength="12" pattern="\d+">
-      <button type="submit" class="btn btn-primary w-100">Consultar</button>
-    </form>
+    <?php if (!$result): ?>
+      <form method="post" autocomplete="off">
+        <input type="text" name="dni" class="form-control" placeholder="Ingrese DNI" required maxlength="12" pattern="\d+">
+        <button type="submit" class="btn btn-primary w-100">Consultar</button>
+      </form>
+    <?php endif; ?>  
     <div class="alert alert-danger mt-3" style="background:rgba(255,0,0,0.13);border:2px solid #ff0000;color:#b30000;font-weight:bold;text-align:center;">
       Estimado cliente, por favor abonar la cuota durante el 01 y el 10 de cada mes.
     </div>

@@ -1,9 +1,22 @@
+<?php
+$nombre = $_GET['nombre'] ?? '';
+$apellido = $_GET['apellido'] ?? '';
+$dni = $_GET['dni'] ?? '';
+$error = $_GET['error'] ?? '';
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agregar Socio</title>
+  <?php if ($error === 'dni'): ?>
+    <div class="alert alert-danger">El DNI ingresado ya está registrado. Por favor, ingrese uno diferente.</div>
+  <?php elseif ($error === 'otro'): ?>
+    <div class="alert alert-danger">Ocurrió un error al agregar el socio. Intente nuevamente.</div>
+  <?php endif; ?>
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">

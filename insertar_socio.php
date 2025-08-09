@@ -41,17 +41,16 @@ if (
         header('Location: index.php');
         exit;
     } catch (PDOException $e) {
-    if ($e->getCode() === '23000') {
-        $_SESSION['msg'] = ['type' => 'danger', 'text' => "Ya existe un socio con el DNI $dni."];
-        header('Location: agregar_socio.php');
-        exit;
-    } else {
-        error_log('Error insertar_socio: ' . $e->getMessage());
-        $_SESSION['msg'] = ['type' => 'danger', 'text' => 'Error al insertar socio.'];
-        header('Location: agregar_socio.php');
-        exit;
+        if ($e->getCode() === '23000') {
+            // Redirige con error y datos previos
+            header('Location: agregar_socio.php?error=dni&nombre=' . urlencode($_POST['nombre']) . '&apellido=' . urlencode($_POST['apellido']) . '&dni=' . urlencode($dni));
+            exit;
+        } else {
+            error_log('Error insertar_socio: ' . $e->getMessage());
+            header('Location: agregar_socio.php?error=otro');
+            exit;
+        }
     }
-}
 } else {
     echo "<p>Faltan datos obligatorios.</p><a href=\"agregar_socio.php\">Volver</a>";
 }
