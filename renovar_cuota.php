@@ -33,6 +33,10 @@ try {
     ");
     $stmt->execute([':id' => $id]);
 
+    $ins = $conexion->prepare("INSERT INTO renovaciones (socio_id, fecha_renovacion) VALUES (:sid, :f)");
+    $ins->execute([':sid' => $id, ':f' => date('Y-m-d')]);
+
+
     $_SESSION['msg'] = ['type' => 'success', 'text' => '¡Cuota renovada correctamente!'];
 } catch (PDOException $e) {
     error_log('renovar_cuota.php - Error renovar id='.$id.' - '.$e->getMessage());

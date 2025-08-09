@@ -37,7 +37,9 @@ if (
         ]);
 
         $lastId = $conexion->lastInsertId();
-
+        $insStmt = $conexion->prepare("INSERT INTO renovaciones (socio_id, fecha_renovacion) VALUES (:sid, :f)");
+        $insStmt->execute([':sid' => $lastId, ':f' => $inscripcion]); // $inscripcion = fecha de hoy 'Y-m-d'
+        
         $_SESSION['msg'] = [
         'type' => 'success',
         'text' => 'Socio agregado correctamente.'

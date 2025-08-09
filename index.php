@@ -104,7 +104,27 @@ $socios = $stmt->fetchAll();
 
     .selected-row {
   background-color: #ffe0e0 !important;
+  }
+  
+  .fab {
+  position: fixed;
+  right: 20px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #FFD700;
+  color: #000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  z-index: 9999;
+  text-decoration:none;
+  font-size: 24px;
 }
+.fab:hover { transform: translateY(-2px); }
+
   </style>
 
 </head>
@@ -120,6 +140,8 @@ $socios = $stmt->fetchAll();
 <img src="logo-gym.png" alt="Bull Gym Logo" class="logo-gym">
 
   <h1 class="mb-4 text-center">Socios del Gimnasio</h1>
+
+  <a href="historial.php" class="fab" title="Historial de renovaciones" aria-label="Historial de renovaciones">⏱</a>
 
   <div class="d-flex mb-3 gap-2">
     <a href="agregar_socio.php" class="btn btn-success">Agregar Socio</a>
