@@ -156,6 +156,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       background: #FFD700;
       color: #181818;
     }
+
+    .alert-danger {
+      background: rgba(255,0,0,0.15) !important;
+      border: 2px solid #ff0000 !important;
+      color: #b30000 !important;
+      font-weight: bold;
+      text-align: center;
+    }
+
     @media (max-width: 600px) {
       .main-card { padding: 1.2rem .5rem 1.5rem .5rem; }
       .logo-gym { width: 90px; height: 90px; }
@@ -172,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="admin-link">
       <a href="login.php" class="btn">Admin</a>
     </div>
-    <img src="logo gym.jpg" alt="Bull Gym Logo" class="logo-gym">
+    <img src="logo-gym.png" alt="Bull Gym Logo" class="logo-gym">
     <h2>Consulta de Socio</h2>
     <?php if ($result): ?>
       <div class="info-box">
@@ -181,13 +190,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <p><strong>DNI:</strong> <?=htmlspecialchars($result['dni'])?></p>
         <p><strong>Inscripción:</strong> <?= safeFormatDate($result['fecha_inscripcion']) ?></p>
         <p><strong>Vencimiento:</strong> <?= safeFormatDate($result['fecha_vencimiento']) ?></p>
-        <p><strong>Días restantes:</strong> <?= $result['dias_restantes'] ?> días</p>
+        <p><strong>Días restantes:</strong>
+          <?php if ($result['dias_restantes'] < 0): ?>
+          <span class="text-danger fw-bold">CUOTA VENCIDA</span>
+          <audio id="error-audio" src="error.mp3" style="display:none"></audio>
+          <?php else: ?>
+            <?= $result['dias_restantes'] ?> días
+          <?php endif; ?>
+        </p>
       </div>
     <?php endif; ?>
     <form method="post" autocomplete="off">
       <input type="text" name="dni" class="form-control" placeholder="Ingrese DNI" required maxlength="12" pattern="\d+">
       <button type="submit" class="btn btn-primary w-100">Consultar</button>
     </form>
+    <div class="alert alert-danger mt-3" style="background:rgba(255,0,0,0.13);border:2px solid #ff0000;color:#b30000;font-weight:bold;text-align:center;">
+      Estimado cliente, por favor abonar la cuota durante el 01 y el 10 de cada mes.
+    </div>
   </div>
+
+  <?php if ($result && $result['dias_restantes'] < 0): ?>
+<script>
+  // Reproducir el sonido solo si el usuario ya interactuó (envió el formulario)
+  document.addEventListener('DOMContentLoaded', function() {
+    var audio = document.getElementById('error-audio');
+    if (audio) {
+      // Intenta reproducir el audio después de un pequeño delay
+      setTimeout(function() {
+        audio.play().catch(function(){});
+      }, 200);
+    }
+  });
+</script>
+<?php endif; ?>         
 </body>
 </html>

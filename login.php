@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
   <div class="main-card">
-    <img src="logo gym.jpg" alt="Bull Gym Logo" class="logo-gym">
+    <img src="logo-gym.png" alt="Bull Gym Logo" class="logo-gym">
     <h2>Acceso Administrativo</h2>
     <?php if (isset($_SESSION['msg'])): ?>
       <div class="alert alert-<?= $_SESSION['msg']['type'] ?> text-center">

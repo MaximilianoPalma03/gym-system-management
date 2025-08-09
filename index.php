@@ -2,6 +2,11 @@
 session_start();
 require_once 'bdd.php';
 
+if (empty($_SESSION['csrf'])) {
+    // random_bytes requiere PHP 7+. Genera 64 hex chars.
+    $_SESSION['csrf'] = bin2hex(random_bytes(32));
+}
+
 function safeFormatDate($fecha) {
     if (empty($fecha)) return '-';
     $d = DateTime::createFromFormat('Y-m-d', $fecha);
@@ -40,7 +45,7 @@ $ordenDias = isset($_GET['orden']) && $_GET['orden'] === 'dias';
 // Preparar cláusula ORDER BY
 $orderClause = $ordenDias
     ? "dias_restantes ASC, apellido, nombre"
-    : "apellido, nombre";
+    : "ID DESC";
 
 // 1) Contar total de socios
 $countSql = "SELECT COUNT(*) FROM socios";
@@ -108,7 +113,7 @@ $socios = $stmt->fetchAll();
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
     </div>
   <?php endif; ?>
-<img src="logo gym.jpg" alt="Bull Gym Logo" class="logo-gym">
+<img src="logo-gym.png" alt="Bull Gym Logo" class="logo-gym">
 
   <h1 class="mb-4 text-center">Socios del Gimnasio</h1>
 
@@ -162,23 +167,33 @@ $socios = $stmt->fetchAll();
     </thead>
     <tbody>
       <?php foreach ($socios as $s): ?>
-      <tr>
-        <td><?= htmlspecialchars($s['nombre']) ?></td>
-        <td><?= htmlspecialchars($s['apellido']) ?></td>
-        <td><?= htmlspecialchars($s['dni']) ?></td>
-        <td><?= safeFormatDate($s['fecha_inscripcion']) ?></td>
-        <td><?= safeFormatDate($s['fecha_vencimiento']) ?></td>
-        <td>
-          <?= $s['dias_restantes'] >= 0
-                ? $s['dias_restantes'] . ' días'
-                : 'Venció hace ' . abs($s['dias_restantes']) . ' días' ?>
-        </td>
-        <td>
-          <a href="editar_socio.php?id=<?= $s['id'] ?>" class="btn btn-sm btn-warning">Editar</a>
-          <a href="confirmar_eliminar.php?id=<?= $s['id'] ?>" class="btn btn-sm btn-danger">Eliminar</a>
-        </td>
-      </tr>
-      <?php endforeach; ?>
+    <tr<?= ($s['dias_restantes'] < 0) ? ' class="table-danger"' : '' ?>>
+    <td><?= htmlspecialchars($s['nombre']) ?></td>
+    <td><?= htmlspecialchars($s['apellido']) ?></td>
+    <td><?= htmlspecialchars($s['dni']) ?></td>
+    <td><?= safeFormatDate($s['fecha_inscripcion']) ?></td>
+    <td><?= safeFormatDate($s['fecha_vencimiento']) ?></td>
+    <td>
+      <?= $s['dias_restantes'] >= 0
+            ? $s['dias_restantes'] . ' días'
+            : 'Venció hace ' . abs($s['dias_restantes']) . ' días' ?>
+    </td>
+    <td>
+      <!-- FORM POST para RENOVAR (confirmación + token CSRF) -->
+    <form action="renovar_cuota.php" method="POST" style="display:inline;">
+      <input type="hidden" name="id" value="<?= $s['id'] ?>">
+      <input type="hidden" name="csrf" value="<?= $_SESSION['csrf'] ?>">
+      <button type="submit" class="btn btn-warning btn-sm">Renovar cuota</button>
+    </form>
+
+      <!-- EDITAR -->
+      <a href="editar_socio.php?id=<?= $s['id'] ?>" class="btn btn-sm btn-warning">Editar</a>
+
+      <!-- ELIMINAR -->
+      <a href="confirmar_eliminar.php?id=<?= $s['id'] ?>" class="btn btn-sm btn-danger">Eliminar</a>
+    </td>
+  </tr>
+<?php endforeach; ?>
     </tbody>
   </table>
 
