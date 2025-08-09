@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dni = $_POST['dni'] ?? '';
     if (ctype_digit($dni)) {
         $stmt = $conexion->prepare("SELECT nombre,apellido,dni,fecha_inscripcion,fecha_vencimiento,
-            DATEDIFF(fecha_vencimiento,CURRENT_DATE()) AS dias_restantes
+            DATEDIFF(fecha_vencimiento,CURRENT_DATE()) AS dias_restantes, parcial
             FROM socios WHERE dni = :dni");
         $stmt->execute([':dni' => $dni]);
         $result = $stmt->fetch();
@@ -198,6 +198,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?= $result['dias_restantes'] ?> días
           <?php endif; ?>
         </p>
+        <?php if (isset($result['parcial']) && $result['parcial'] == 1): ?>
+          <p><strong>Estado:</strong> <span style="color:#2196f3;font-weight:bold;">PARCIAL</span></p>
+        <?php endif; ?>
       </div>
     <?php endif; ?>
     <?php if (!$result): ?>

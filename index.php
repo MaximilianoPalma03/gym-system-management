@@ -101,6 +101,10 @@ $socios = $stmt->fetchAll();
     @media (max-width: 600px) {
       .logo-gym { width: 80px; height: 80px; }
     }
+
+    tr.selected-row {
+    background-color: #ffe0e0 !important;
+  }
   </style>
 
 </head>
@@ -138,7 +142,7 @@ $socios = $stmt->fetchAll();
       $toggleUrl = basename(__FILE__) . '?' . http_build_query($toggleParams);
     ?>
     <a href="<?= $toggleUrl ?>" class="btn <?= $btnClass ?>"><?= $label ?></a>
-
+    
     <!-- Búsqueda por DNI -->
     <form method="get" class="d-flex ms-auto">
       <?php if ($ordenDias): ?>
@@ -161,13 +165,18 @@ $socios = $stmt->fetchAll();
   <table class="table table-bordered table-hover">
     <thead class="table-dark">
       <tr>
+        <th><input type="checkbox" id="select-all"></th>
         <th>Nombre</th><th>Apellido</th><th>DNI</th>
         <th>Inscripción</th><th>Vencimiento</th><th>Días Rest.</th><th>Acciones</th>
       </tr>
     </thead>
     <tbody>
-      <?php foreach ($socios as $s): ?>
-    <tr<?= ($s['dias_restantes'] < 0) ? ' class="table-danger"' : '' ?>>
+      <?php foreach ($socios as $s): 
+    $esParcial = isset($_GET['parcial'], $_GET['id']) && $_GET['parcial'] == 1 && $_GET['id'] == $s['id'];
+      $clase = ($s['dias_restantes'] < 0) ? 'table-danger' : '';
+    if ($s['parcial'] == 1) $clase = 'table-primary';
+?>
+<tr<?= $clase ? ' class="'.$clase.'"' : '' ?>>
     <td><?= htmlspecialchars($s['nombre']) ?></td>
     <td><?= htmlspecialchars($s['apellido']) ?></td>
     <td><?= htmlspecialchars($s['dni']) ?></td>
@@ -230,6 +239,26 @@ $socios = $stmt->fetchAll();
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+document.getElementById('select-all').addEventListener('change', function() {
+  const checked = this.checked;
+  document.querySelectorAll('.row-checkbox').forEach(cb => {
+    cb.checked = checked;
+    cb.closest('tr').classList.toggle('selected-row', checked);
+  });
+  toggleDeleteButton();
+});
+document.querySelectorAll('.row-checkbox').forEach(cb => {
+  cb.addEventListener('change', function() {
+    this.closest('tr').classList.toggle('selected-row', this.checked);
+    toggleDeleteButton();
+  });
+});
+function toggleDeleteButton() {
+  const anyChecked = Array.from(document.querySelectorAll('.row-checkbox')).some(cb => cb.checked);
+  document.getElementById('delete-selected').style.display = anyChecked ? 'inline-block' : 'none';
+}
+
+
   // Ocultar automáticamente la alerta tras 5 segundos
   (function() {
     const alertEl = document.querySelector('.alert');

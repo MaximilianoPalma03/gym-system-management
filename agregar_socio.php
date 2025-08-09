@@ -3,6 +3,11 @@ $nombre = $_GET['nombre'] ?? '';
 $apellido = $_GET['apellido'] ?? '';
 $dni = $_GET['dni'] ?? '';
 $error = $_GET['error'] ?? '';
+
+$hoy = date('Y-m-d');
+$venc = date('Y-m-d', strtotime('+1 month'));
+$fecha_inscripcion = $_GET['fecha_inscripcion'] ?? $hoy;
+$fecha_vencimiento = $_GET['fecha_vencimiento'] ?? $venc;
 ?>
 
 <!DOCTYPE html>
@@ -34,6 +39,18 @@ $error = $_GET['error'] ?? '';
     <div class="mb-3">
       <label for="dni" class="form-label">DNI</label>
       <input type="text" name="dni" id="dni" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="fecha_inscripcion" class="form-label">Fecha de inscripción</label>
+      <input type="date" name="fecha_inscripcion" id="fecha_inscripcion" class="form-control" required value="<?= htmlspecialchars($fecha_inscripcion) ?>">
+    </div>
+    <div class="mb-3">
+      <label for="fecha_vencimiento" class="form-label">Fecha de vencimiento</label>
+      <input type="date" name="fecha_vencimiento" id="fecha_vencimiento" class="form-control" required value="<?= htmlspecialchars($fecha_vencimiento) ?>">
+    </div>
+    <div class="form-check form-switch mb-4">
+      <input class="form-check-input" type="checkbox" id="parcial" name="parcial" value="1">
+      <label class="form-check-label" for="parcial">Parcial</label>
     </div>
     <button type="submit" class="btn btn-success">Guardar</button>
     <a href="index.php" class="btn btn-secondary ms-2">Cancelar</a>

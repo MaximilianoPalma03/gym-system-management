@@ -20,22 +20,35 @@ if (
     }
 
     try {
+        $parcial = isset($_POST['parcial']) && $_POST['parcial'] == '1' ? 1 : 0;
+
         $sql = "UPDATE socios SET
                     nombre = :n,
                     apellido = :a,
-                    dni = :dni
+                    dni = :dni,
+                    fecha_inscripcion = :fi,
+                    fecha_vencimiento = :fv,
+                    parcial = :parcial
                 WHERE id = :id";
         $stmt = $conexion->prepare($sql);
         $stmt->execute([
             ':n'   => $_POST['nombre'],
             ':a'   => $_POST['apellido'],
             ':dni' => $dni,
+            ':fi'  => $_POST['fecha_inscripcion'],
+            ':fv'  => $_POST['fecha_vencimiento'],
+            ':parcial' => $parcial,
             ':id'  => $id
         ]);
 
         // Mensaje flash
         $_SESSION['msg'] = ['type' => 'success', 'text' => 'Socio actualizado correctamente.'];
-        header('Location: index.php');
+        $parcial = isset($_POST['parcial']) && $_POST['parcial'] == '1';
+        if ($parcial) {
+            header('Location: index.php?parcial=1&id=' . $id);
+        } else {
+            header('Location: index.php');
+        }
         exit;
     } catch (PDOException $e) {
         // Si es violación de unique (dni duplicado)
