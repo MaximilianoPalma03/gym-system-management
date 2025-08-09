@@ -1,5 +1,14 @@
 <?php
 require_once 'bdd.php';
+
+if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+$csrf = $_POST['csrf'] ?? '';
+if (empty($csrf) || !hash_equals($_SESSION['csrf'] ?? '', $csrf)) {
+    $_SESSION['msg'] = ['type'=>'danger','text'=>'Token inválido.'];
+    header('Location: index.php');
+    exit;
+}
+
 if (!isset($_GET['id'])) header('Location:index.php');
 $id = intval($_GET['id']);
 $stmt = $conexion->prepare("SELECT nombre, apellido FROM socios WHERE id=?");

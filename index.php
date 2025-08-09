@@ -102,9 +102,9 @@ $socios = $stmt->fetchAll();
       .logo-gym { width: 80px; height: 80px; }
     }
 
-    tr.selected-row {
-    background-color: #ffe0e0 !important;
-  }
+    .selected-row {
+  background-color: #ffe0e0 !important;
+}
   </style>
 
 </head>
@@ -142,6 +142,14 @@ $socios = $stmt->fetchAll();
       $toggleUrl = basename(__FILE__) . '?' . http_build_query($toggleParams);
     ?>
     <a href="<?= $toggleUrl ?>" class="btn <?= $btnClass ?>"><?= $label ?></a>
+
+    <!-- FORM que contiene el botón Eliminar seleccionados (NO envuelve la tabla) -->
+ <form id="multi-delete-form" action="confirmar_eliminar_multiple.php" method="POST" style="margin-left:8px;">
+  <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['csrf'] ?? '') ?>">
+  <button type="submit" class="btn btn-danger" id="delete-selected" style="display:none;">
+    Eliminar seleccionados
+  </button>
+</form>
     
     <!-- Búsqueda por DNI -->
     <form method="get" class="d-flex ms-auto">
@@ -177,6 +185,8 @@ $socios = $stmt->fetchAll();
     if ($s['parcial'] == 1) $clase = 'table-primary';
 ?>
 <tr<?= $clase ? ' class="'.$clase.'"' : '' ?>>
+     <td><input type="checkbox" class="row-checkbox" value="<?= intval($s['id']) ?>"
+      aria-label="Seleccionar socio <?= htmlspecialchars($s['nombre'].' '.$s['apellido']) ?>"></td>    
     <td><?= htmlspecialchars($s['nombre']) ?></td>
     <td><?= htmlspecialchars($s['apellido']) ?></td>
     <td><?= htmlspecialchars($s['dni']) ?></td>
@@ -239,24 +249,73 @@ $socios = $stmt->fetchAll();
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-document.getElementById('select-all').addEventListener('change', function() {
-  const checked = this.checked;
+document.addEventListener('DOMContentLoaded', function() {
+  const selectAll = document.getElementById('select-all');
+  const deleteBtn = document.getElementById('delete-selected');
+  const bulkForm = document.getElementById('multi-delete-form');
+
+  function updateDeleteButtonVisibility() {
+    const anyChecked = Array.from(document.querySelectorAll('.row-checkbox')).some(cb => cb.checked);
+    if (deleteBtn) deleteBtn.style.display = anyChecked ? 'inline-block' : 'none';
+  }
+
+  // select-all
+  if (selectAll) {
+    selectAll.addEventListener('change', function() {
+      const checked = this.checked;
+      document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.checked = checked;
+        cb.closest('tr').classList.toggle('selected-row', checked);
+      });
+      updateDeleteButtonVisibility();
+    });
+  }
+
+  // cada checkbox de fila
   document.querySelectorAll('.row-checkbox').forEach(cb => {
-    cb.checked = checked;
-    cb.closest('tr').classList.toggle('selected-row', checked);
+    cb.addEventListener('change', function() {
+      this.closest('tr').classList.toggle('selected-row', this.checked);
+      // mantener selectAll en sync
+      const all = Array.from(document.querySelectorAll('.row-checkbox'));
+      if (selectAll) selectAll.checked = all.length > 0 && all.every(c => c.checked);
+      updateDeleteButtonVisibility();
+    });
   });
-  toggleDeleteButton();
+
+  // Antes de enviar: crear inputs ocultos name="ids[]"
+  if (bulkForm) {
+    bulkForm.addEventListener('submit', function(e) {
+      // eliminar inputs previos si existen
+      bulkForm.querySelectorAll('input[name="ids[]"]').forEach(n => n.remove());
+
+      // recolectar ids seleccionados
+      const checkedBoxes = Array.from(document.querySelectorAll('.row-checkbox')).filter(cb => cb.checked);
+      if (checkedBoxes.length === 0) {
+        e.preventDefault();
+        alert('No seleccionaste ningún socio.');
+        return;
+      }
+
+      // Opcional: si preferís preguntar con pop-up (no recomendado por supresión), descomenta:
+      // if (!confirm('¿Eliminar los socios seleccionados?')) { e.preventDefault(); return; }
+
+      // Añadir inputs ocultos
+      checkedBoxes.forEach(cb => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'ids[]';
+        input.value = cb.value;
+        bulkForm.appendChild(input);
+      });
+
+      // Si tu flow usa confirm en servidor: el form va a confirmar allí.
+      // Si envías directo a eliminar_multiple.php, este recibirá $_POST['ids'] correctamente.
+    });
+  }
+
+  // estado inicial
+  updateDeleteButtonVisibility();
 });
-document.querySelectorAll('.row-checkbox').forEach(cb => {
-  cb.addEventListener('change', function() {
-    this.closest('tr').classList.toggle('selected-row', this.checked);
-    toggleDeleteButton();
-  });
-});
-function toggleDeleteButton() {
-  const anyChecked = Array.from(document.querySelectorAll('.row-checkbox')).some(cb => cb.checked);
-  document.getElementById('delete-selected').style.display = anyChecked ? 'inline-block' : 'none';
-}
 
 
   // Ocultar automáticamente la alerta tras 5 segundos
@@ -269,6 +328,5 @@ function toggleDeleteButton() {
     }, 5000);
   })();
 </script>
-
 </body>
 </html>
