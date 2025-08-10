@@ -91,14 +91,31 @@ $filas = $stmt->fetchAll();
       </tr>
     </thead>
     <tbody>
-      <?php foreach($filas as $r): ?>
+      <?php foreach($filas as $r):
+        $hist_raw = $r['historial'] ?? '';
+        $hist_items = [];
+    if ($hist_raw !== '') {
+        foreach (explode(',', $hist_raw) as $p) {
+            $p = trim($p);
+            if ($p !== '') $hist_items[] = safeFormatDate($p);
+        }
+    }
+
+    // texto a mostrar en la columna historial (si está vacío, quedará en blanco)
+     $hist_text = '';
+    if (!empty($hist_items)) {
+        $hist_text = implode(', ', $hist_items);
+    } else {
+        $hist_text = 'Sin renovaciones';
+    }
+        ?>
       <tr>
         <td><?= htmlspecialchars($r['nombre']) ?></td>
         <td><?= htmlspecialchars($r['apellido']) ?></td>
         <td><?= htmlspecialchars($r['dni']) ?></td>
         <td><?= safeFormatDate($r['fecha_alta'] ?? $r['fecha_inscripcion']) ?></td>
         <td><?= safeFormatDate($r['ultima_renovacion']) ?></td>
-        <td class="small-hist"><?= htmlspecialchars($r['historial']) ?></td>
+        <td class="small-hist"><?= htmlspecialchars($hist_text) ?></td>
       </tr>
       <?php endforeach; ?>
     </tbody>
