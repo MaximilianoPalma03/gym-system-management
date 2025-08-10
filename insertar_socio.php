@@ -23,9 +23,9 @@ if (
 
     try {
         $sql = "INSERT INTO socios
-                (nombre, apellido, dni, fecha_inscripcion, fecha_vencimiento, parcial)
+                (nombre, apellido, dni, fecha_inscripcion, fecha_vencimiento, parcial, fecha_alta)
                 VALUES
-                (:n, :a, :dni, :fi, :fv, :parcial)";
+                (:n, :a, :dni, :fi, :fv, :parcial, :fa)";
         $stmt = $conexion->prepare($sql);
         $stmt->execute([
             ':n'   => $_POST['nombre'],
@@ -33,7 +33,8 @@ if (
             ':dni' => $dni,
             ':fi'  => $inscripcion,
             ':fv'  => $vencimiento,
-            ':parcial' => $parcial
+            ':parcial' => $parcial,
+            ':fa' => $inscripcion
         ]);
 
         $lastId = $conexion->lastInsertId();

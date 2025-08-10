@@ -222,9 +222,9 @@ $socios = $stmt->fetchAll();
     <td>
       <!-- FORM POST para RENOVAR (confirmación + token CSRF) -->
     <form action="renovar_cuota.php" method="POST" style="display:inline;">
-      <input type="hidden" name="id" value="<?= $s['id'] ?>">
-      <input type="hidden" name="csrf" value="<?= $_SESSION['csrf'] ?>">
-      <button type="submit" class="btn btn-warning btn-sm">Renovar cuota</button>
+     <input type="hidden" name="id" value="<?= intval($s['id']) ?>">
+      <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['csrf'] ?? '') ?>">
+       <button type="submit" class="btn btn-warning btn-sm">Renovar cuota</button>
     </form>
 
       <!-- EDITAR -->

@@ -27,18 +27,21 @@ $totalPaginas = max(1, ceil($totalSocios / $porPagina));
 
 // Consulta principal:
 // Traemos datos del socio y el historial concatenado (GROUP_CONCAT). ORDER BY depende de $orden.
-$orderClause = $orden ? "COALESCE(MAX(r.fecha_renovacion), s.fecha_inscripcion) DESC" : "s.apellido, s.nombre";
-
 $sql = "
-  SELECT s.id, s.nombre, s.apellido, s.dni, s.fecha_inscripcion, 
-         COALESCE(GROUP_CONCAT(DATE_FORMAT(r.fecha_renovacion, '%d/%m/%Y') ORDER BY r.fecha_renovacion DESC SEPARATOR ', '), '') AS historial,
-         COALESCE(MAX(r.fecha_renovacion), s.fecha_inscripcion) AS ultima_renovacion
-  FROM socios s
-  LEFT JOIN renovaciones r ON r.socio_id = s.id
-  " . ($filtroDni ? " WHERE s.dni = :dni " : "") . "
-  GROUP BY s.id
-  ORDER BY $orderClause
-  LIMIT :limit OFFSET :offset
+SELECT
+  s.id,
+  s.nombre,
+  s.apellido,
+  s.dni,
+  s.fecha_alta,
+  MAX(r.fecha_renovacion) AS ultima_renovacion,
+  GROUP_CONCAT(DATE_FORMAT(r.fecha_renovacion, '%Y-%m-%d') ORDER BY r.fecha_renovacion DESC SEPARATOR ',') AS historial
+FROM socios s
+LEFT JOIN renovaciones r ON r.socio_id = s.id
+" . ($filtroDni ? " WHERE s.dni = :dni " : "") . "
+GROUP BY s.id, s.nombre, s.apellido, s.dni, s.fecha_alta
+ORDER BY s.apellido, s.nombre
+LIMIT :limit OFFSET :offset
 ";
 
 $stmt = $conexion->prepare($sql);
@@ -93,7 +96,7 @@ $filas = $stmt->fetchAll();
         <td><?= htmlspecialchars($r['nombre']) ?></td>
         <td><?= htmlspecialchars($r['apellido']) ?></td>
         <td><?= htmlspecialchars($r['dni']) ?></td>
-        <td><?= safeFormatDate($r['fecha_inscripcion']) ?></td>
+        <td><?= safeFormatDate($r['fecha_alta'] ?? $r['fecha_inscripcion']) ?></td>
         <td><?= safeFormatDate($r['ultima_renovacion']) ?></td>
         <td class="small-hist"><?= htmlspecialchars($r['historial']) ?></td>
       </tr>

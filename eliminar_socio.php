@@ -6,6 +6,20 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['id'])) {
+    $_SESSION['msg'] = ['type'=>'danger','text'=>'Solicitud inválida.'];
+    header('Location: index.php');
+    exit;
+}
+
+// Validar CSRF
+$csrf = $_POST['csrf'] ?? '';
+if (empty($csrf) || !hash_equals($_SESSION['csrf'] ?? '', $csrf)) {
+    $_SESSION['msg'] = ['type'=>'danger','text'=>'Token inválido.'];
+    header('Location: index.php');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['id'])) {
     $id = intval($_POST['id']);
 
