@@ -15,7 +15,6 @@ $fecha_vencimiento = isset($_GET['fecha_vencimiento']) ? $_GET['fecha_vencimient
 $parcial = isset($_GET['parcial']) ? $_GET['parcial'] == '1' : ($s['parcial'] == 1);
 ?>
 
-?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

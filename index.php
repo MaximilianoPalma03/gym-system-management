@@ -202,7 +202,7 @@ $socios = $stmt->fetchAll();
     </thead>
     <tbody>
       <?php foreach ($socios as $s): 
-    $esParcial = isset($_GET['parcial'], $_GET['id']) && $_GET['parcial'] == 1 && $_GET['id'] == $s['id'];
+     $esParcial = isset($_GET['parcial'], $_GET['id']) && $_GET['parcial'] == 1 && $_GET['id'] == $s['id'];
       $clase = ($s['dias_restantes'] < 0) ? 'table-danger' : '';
     if ($s['parcial'] == 1) $clase = 'table-primary';
 ?>
@@ -226,6 +226,17 @@ $socios = $stmt->fetchAll();
       <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['csrf'] ?? '') ?>">
        <button type="submit" class="btn btn-warning btn-sm">Renovar cuota</button>
     </form>
+    
+   <button 
+  type="button" 
+  class="btn btn-success btn-sm btn-open-renovar"
+  data-id="<?= intval($s['id']) ?>"
+  data-nombre="<?= htmlspecialchars($s['nombre']) ?>"
+  data-apellido="<?= htmlspecialchars($s['apellido']) ?>"
+  data-fecha_inscripcion="<?= htmlspecialchars($s['fecha_inscripcion']) ?>"
+>
+  💬 Generar comprobante
+</button>
 
       <!-- EDITAR -->
       <a href="editar_socio.php?id=<?= $s['id'] ?>" class="btn btn-sm btn-warning">Editar</a>
@@ -268,6 +279,56 @@ $socios = $stmt->fetchAll();
     </ul>
   </nav>
 </div>
+
+<!-- Modal Renovar / Enviar WhatsApp -->
+<div class="modal fade" id="modalRenovar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content">
+      <form id="formRenovar" method="post">
+        <div class="modal-header">
+          <h5 class="modal-title">Renovar cuota / Enviar comprobante</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="renovar_id">
+          <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['csrf'] ?? '') ?>">
+          <div class="mb-2">
+            <label class="form-label">Nombre</label>
+            <input type="text" id="renovar_nombre" class="form-control" readonly>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Apellido</label>
+            <input type="text" id="renovar_apellido" class="form-control" readonly>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Fecha (hoy)</label>
+            <input type="text" id="renovar_fecha" class="form-control" readonly>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Teléfono</label>
+            <input type="text" id="renovar_telefono" name="telefono" class="form-control" placeholder="Ej: 54911xxxxxxxx">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Importe</label>
+            <input type="text" id="renovar_importe" name="importe" class="form-control" placeholder="Ej: 3500">
+          </div>
+          <div class="form-text">Al presionar "Enviar WhatsApp" se generará el PDF localmente y se abrirá WhatsApp Web con el mensaje. Luego tendrás que adjuntar manualmente el PDF (se abrirá la carpeta donde se guardó).</div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btnEnviarWhats" class="btn btn-success">
+            <img src="whatsapp-icon.png" alt="wa" style="width:18px;vertical-align:middle;margin-right:6px"> Enviar WhatsApp
+          </button>
+
+          <button type="submit" id="btnRenovar" class="btn btn-primary">Renovar cuota</button>
+
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -349,6 +410,133 @@ document.addEventListener('DOMContentLoaded', function() {
       bsAlert.close();
     }, 5000);
   })();
+
+
+  document.addEventListener('DOMContentLoaded', function(){
+  // Inicializar fecha actual en modal
+  function hoyYmd() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+
+  // abrir modal con datos
+  document.querySelectorAll('.btn-open-renovar').forEach(btn => {
+    btn.addEventListener('click', function(){
+      const id   = this.dataset.id;
+      const nom  = this.dataset.nombre || '';
+      const ape  = this.dataset.apellido || '';
+      const dni  = this.dataset.dni || '';
+      const insc = this.dataset.fecha_inscripcion || hoyYmd();
+
+      document.getElementById('renovar_id').value = id;
+      document.getElementById('renovar_nombre').value = nom;
+      document.getElementById('renovar_apellido').value = ape;
+      document.getElementById('renovar_fecha').value = insc; // o hoyYmd() si querés hoy
+      // prellenar telefono si lo tenés en la BD (si almacenás tel en socios, añadir data-tel)
+      document.getElementById('renovar_telefono').value = this.dataset.telefono || '';
+      document.getElementById('renovar_importe').value = '';
+
+      // mostrar modal
+      const modalEl = document.getElementById('modalRenovar');
+      const bs = bootstrap.Modal.getOrCreateInstance(modalEl);
+      bs.show();
+    });
+  });
+
+  // Enviar WhatsApp (genera PDF y abre carpeta + wa web)
+  document.getElementById('btnEnviarWhats').addEventListener('click', function(e){
+    const form = document.getElementById('formRenovar');
+    const fd = new FormData(form);
+
+    // validaciones mínimas
+    const telefono = (fd.get('telefono') || '').replace(/\s+/g,'');
+    const importe = (fd.get('importe') || '').trim();
+    if (!telefono || !/^\+?\d+$/.test(telefono)) {
+      alert('Ingresá un teléfono válido (solo números, con prefijo país si corresponde, ej 54911XXXX).');
+      return;
+    }
+    if (!importe) {
+      alert('Ingresá el importe.');
+      return;
+    }
+
+    // Mostrar loader (opcional)
+    this.disabled = true;
+    this.textContent = 'Generando...';
+
+   // en vez de window.open(j.wa, '_blank');
+fetch('generar_pdf_local.php', {
+  method: 'POST',
+  body: fd,
+  credentials: 'same-origin'
+})
+.then(r => r.json())
+.then(j => {
+  this.disabled = false;
+  this.innerHTML = '<img src="whatsapp-icon.png" alt="wa" style="width:18px;vertical-align:middle;margin-right:6px"> Enviar WhatsApp';
+  if (!j.ok) {
+    alert('Error: ' + (j.error || 'no ok'));
+    return;
+  }
+
+  // Si estamos en navegador normal, podés abrir WA en nueva pestaña:
+  if (j.front_open === true && j.wa) {
+    window.open(j.wa, '_blank');
+  }
+
+  // si j.opened_server === true significa que el servidor (php) intentó abrir WA y la carpeta.
+  if (j.opened_server) {
+    alert('Se generó el comprobante y el sistema trató de abrir el navegador y la carpeta de comprobantes.');
+  } else {
+    // fallback: ofrecemos el link público para que el usuario lo abra manualmente
+    if (j.url) {
+      alert('Comprobante creado. Podés descargarlo aquí: ' + j.url);
+      window.open(j.url, '_blank'); // opcional
+    } else {
+      alert('Comprobante creado en: ' + j.file);
+    }
+  }
+})
+.catch(err => {
+  console.error(err);
+  this.disabled = false;
+  this.innerHTML = '<img src="whatsapp-icon.png" alt="wa" style="width:18px;vertical-align:middle;margin-right:6px"> Enviar WhatsApp';
+  alert('Error al generar comprobante.');
+});
+
+
+  // Renovar cuota: envía POST a renovar_cuota.php (mantener tu flujo)
+  document.getElementById('formRenovar').addEventListener('submit', function(e){
+    e.preventDefault();
+    const fd = new FormData(this);
+
+    // validaciones mínimas
+    const telefono = (fd.get('telefono') || '').replace(/\s+/g,'');
+    const importe = (fd.get('importe') || '').trim();
+    if (!importe) {
+      if (!confirm('No ingresaste importe. Deseas continuar igual?')) return;
+    }
+
+    // enviar
+    fetch('renovar_cuota.php', {
+      method: 'POST',
+      body: fd,
+      credentials: 'same-origin'
+    }).then(r => r.text()).then(() => {
+      // cerramos modal y recargamos la página para ver cambios
+      const modalEl = document.getElementById('modalRenovar');
+      bootstrap.Modal.getInstance(modalEl).hide();
+      window.location.href = 'index.php';
+    }).catch(err => {
+      console.error(err);
+      alert('Error al renovar.');
+    });
+  });
+
+});
 </script>
 </body>
 </html>
