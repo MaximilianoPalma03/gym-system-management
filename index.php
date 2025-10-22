@@ -447,65 +447,86 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Enviar WhatsApp (genera PDF y abre carpeta + wa web)
-  document.getElementById('btnEnviarWhats').addEventListener('click', function(e){
-    const form = document.getElementById('formRenovar');
-    const fd = new FormData(form);
+  // dentro de DOMContentLoaded, reemplaza la llamada fetch actual
+document.getElementById('btnEnviarWhats').addEventListener('click', function(e){
+  const boton = this;
+  const form = document.getElementById('formRenovar');
+  const fd = new FormData(form);
 
-    // validaciones mínimas
-    const telefono = (fd.get('telefono') || '').replace(/\s+/g,'');
-    const importe = (fd.get('importe') || '').trim();
-    if (!telefono || !/^\+?\d+$/.test(telefono)) {
-      alert('Ingresá un teléfono válido (solo números, con prefijo país si corresponde, ej 54911XXXX).');
-      return;
-    }
-    if (!importe) {
-      alert('Ingresá el importe.');
-      return;
-    }
-
-    // Mostrar loader (opcional)
-    this.disabled = true;
-    this.textContent = 'Generando...';
-
-   // en vez de window.open(j.wa, '_blank');
-fetch('generar_pdf_local.php', {
-  method: 'POST',
-  body: fd,
-  credentials: 'same-origin'
-})
-.then(r => r.json())
-.then(j => {
-  this.disabled = false;
-  this.innerHTML = '<img src="whatsapp-icon.png" alt="wa" style="width:18px;vertical-align:middle;margin-right:6px"> Enviar WhatsApp';
-  if (!j.ok) {
-    alert('Error: ' + (j.error || 'no ok'));
+  // validaciones
+  const telefono = (fd.get('telefono') || '').replace(/\s+/g,'');
+  const importe = (fd.get('importe') || '').trim();
+  if (!telefono || !/^\+?\d+$/.test(telefono)) {
+    showFormError('Ingresá un teléfono válido (solo números).');
+    return;
+  }
+  if (!importe) {
+    showFormError('Ingresá el importe.');
     return;
   }
 
-  // Si estamos en navegador normal, podés abrir WA en nueva pestaña:
-  if (j.front_open === true && j.wa) {
-    window.open(j.wa, '_blank');
-  }
+  // estado
+  boton.disabled = true;
+  boton.textContent = 'Generando...';
 
-  // si j.opened_server === true significa que el servidor (php) intentó abrir WA y la carpeta.
-  if (j.opened_server) {
-    alert('Se generó el comprobante y el sistema trató de abrir el navegador y la carpeta de comprobantes.');
-  } else {
-    // fallback: ofrecemos el link público para que el usuario lo abra manualmente
-    if (j.url) {
-      alert('Comprobante creado. Podés descargarlo aquí: ' + j.url);
-      window.open(j.url, '_blank'); // opcional
-    } else {
-      alert('Comprobante creado en: ' + j.file);
+  fetch('generar_pdf_local.php', {
+    method: 'POST',
+    body: fd,
+    credentials: 'same-origin'
+  }).then(async r => {
+    const text = await r.text(); // leemos primero como texto para evitar parse error
+    try {
+      const j = JSON.parse(text);
+      if (!j.ok) {
+        showFormError(j.error || 'Error al generar comprobante.');
+        boton.disabled = false;
+        boton.innerHTML = '<img src="whatsapp-icon.png" alt="wa" style="width:18px;vertical-align:middle;margin-right:6px"> Enviar WhatsApp';
+        return;
+      }
+      // todo ok: abrir whatsapp y mostrar info
+      window.open(j.wa, '_blank');
+      // informar al usuario donde quedó el archivo
+      showFormInfo('Comprobante generado: ' + j.file + (j.opened ? ' (se abrió la carpeta).' : ' (abrí la carpeta manualmente).'));
+    } catch (err) {
+      // la respuesta no fue JSON válido: mostrar texto
+      showFormError('Respuesta inválida del servidor: ' + text);
     }
-  }
-})
-.catch(err => {
-  console.error(err);
-  this.disabled = false;
-  this.innerHTML = '<img src="whatsapp-icon.png" alt="wa" style="width:18px;vertical-align:middle;margin-right:6px"> Enviar WhatsApp';
-  alert('Error al generar comprobante.');
+    boton.disabled = false;
+    boton.innerHTML = '<img src="whatsapp-icon.png" alt="wa" style="width:18px;vertical-align:middle;margin-right:6px"> Enviar WhatsApp';
+  }).catch(err => {
+    console.error(err);
+    showFormError('Error de red al generar comprobante.');
+    boton.disabled = false;
+    boton.innerHTML = '<img src="whatsapp-icon.png" alt="wa" style="width:18px;vertical-align:middle;margin-right:6px"> Enviar WhatsApp';
+  });
 });
+
+// helper: mostrar error dentro del modal
+function showFormError(msg) {
+  let cont = document.getElementById('formError');
+  if (!cont) {
+    cont = document.createElement('div');
+    cont.id = 'formError';
+    cont.className = 'alert alert-danger mt-2';
+    const modalBody = document.querySelector('#modalRenovar .modal-body');
+    modalBody.insertBefore(cont, modalBody.firstChild);
+  }
+  cont.className = 'alert alert-danger mt-2';
+  cont.textContent = msg;
+}
+
+// helper: mostrar info (no crítico)
+function showFormInfo(msg) {
+  let cont = document.getElementById('formError');
+  if (!cont) {
+    cont = document.createElement('div');
+    cont.id = 'formError';
+    const modalBody = document.querySelector('#modalRenovar .modal-body');
+    modalBody.insertBefore(cont, modalBody.firstChild);
+  }
+  cont.className = 'alert alert-success mt-2';
+  cont.textContent = msg;
+}
 
 
   // Renovar cuota: envía POST a renovar_cuota.php (mantener tu flujo)
