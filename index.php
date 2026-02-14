@@ -146,8 +146,11 @@ $socios = $stmt->fetchAll();
   <div class="d-flex mb-3 gap-2">
     <a href="agregar_socio.php" class="btn btn-success">Agregar Socio</a>
 
-    <!-- NUEVO: Botón a sección de registro -->
-    <a href="registro.php" class="btn btn-warning">Registro de Socio</a>
+    <!-- Botón a sección de registro - abre en ventana nueva -->
+    <a href="#" onclick="abrirRegistroEnVentana(); return false;" class="btn btn-warning">Registro de Socio</a>
+    
+    <!-- Botón para cerrar ventana de registro (solo visible si está abierta) -->
+    <a href="#" onclick="cerrarRegistroEnVentana(); return false;" class="btn btn-danger" id="btnCerrarRegistro" style="display:none;">Cerrar Registro</a>
     <!-- Toggle orden por días -->
     <?php
       // Construir URL de toggle sin mutar baseParams
@@ -220,13 +223,6 @@ $socios = $stmt->fetchAll();
             : 'Venció hace ' . abs($s['dias_restantes']) . ' días' ?>
     </td>
     <td>
-      <!-- FORM POST para RENOVAR (confirmación + token CSRF) -->
-    <form action="renovar_cuota.php" method="POST" style="display:inline;">
-     <input type="hidden" name="id" value="<?= intval($s['id']) ?>">
-      <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['csrf'] ?? '') ?>">
-       <button type="submit" class="btn btn-warning btn-sm">Renovar cuota</button>
-    </form>
-    
    <button 
   type="button" 
   class="btn btn-success btn-sm btn-open-renovar"
@@ -541,23 +537,110 @@ function showFormInfo(msg) {
       if (!confirm('No ingresaste importe. Deseas continuar igual?')) return;
     }
 
-    // enviar
+    const modalEl = document.getElementById('modalRenovar');
+    const btnRenovar = document.getElementById('btnRenovar');
+    btnRenovar.disabled = true;
+    btnRenovar.textContent = 'Renovando...';
+
+    // enviar con cabeceras AJAX (esperamos JSON de respuesta)
     fetch('renovar_cuota.php', {
       method: 'POST',
       body: fd,
-      credentials: 'same-origin'
-    }).then(r => r.text()).then(() => {
-      // cerramos modal y recargamos la página para ver cambios
-      const modalEl = document.getElementById('modalRenovar');
+      credentials: 'same-origin',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+      }
+    }).then(async r => {
+      // intentar parsear JSON
+      let j = null;
+      try { j = await r.json(); } catch (err) { /* fallthrough */ }
+
+      if (!j) {
+        showFormError('Respuesta inválida del servidor al renovar.');
+        btnRenovar.disabled = false;
+        btnRenovar.textContent = 'Renovar cuota';
+        return;
+      }
+      if (!j.ok) {
+        showFormError(j.error || 'Error al renovar la cuota.');
+        btnRenovar.disabled = false;
+        btnRenovar.textContent = 'Renovar cuota';
+        return;
+      }
+
+      // todo ok: cerramos modal y recargamos
       bootstrap.Modal.getInstance(modalEl).hide();
       window.location.href = 'index.php';
     }).catch(err => {
       console.error(err);
-      alert('Error al renovar.');
+      showFormError('Error de red al renovar.');
+      btnRenovar.disabled = false;
+      btnRenovar.textContent = 'Renovar cuota';
     });
   });
 
 });
 </script>
-</body>
-</html>
+<script>
+// Variable global para rastrear la ventana de registro
+let registroWindow = null;
+
+// Función para abrir registro en ventana nueva
+function abrirRegistroEnVentana() {
+  // Si ya hay una ventana abierta, solo la traemos al frente
+  if (registroWindow && !registroWindow.closed) {
+    registroWindow.focus();
+    return;
+  }
+
+  // Obtener dimensiones de pantalla
+  const screenWidth = screen.width;
+  const screenHeight = screen.height;
+  
+  let ventanaWidth = screenWidth;
+  let ventanaHeight = screenHeight;
+  let ventanaX = screenWidth; // Posicionar en segundo monitor
+  let ventanaY = 0;
+  
+  // Características de la ventana
+  const features = `width=${ventanaWidth},height=${ventanaHeight},left=${ventanaX},top=${ventanaY},toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=yes`.replace(/\s+/g, '');
+  
+  // Abrir ventana y guardar referencia
+  registroWindow = window.open('registro.php?ventana_secundaria=1', 'registroWindow', features);
+  
+  // Mostrar botón de cerrar
+  actualizarEstadoBotonesRegistro();
+  
+  // Monitorear si la ventana se cierra
+  const intervalCheck = setInterval(function() {
+    if (registroWindow && registroWindow.closed) {
+      clearInterval(intervalCheck);
+      registroWindow = null;
+      actualizarEstadoBotonesRegistro();
+    }
+  }, 1000);
+}
+
+// Función para cerrar la ventana de registro
+function cerrarRegistroEnVentana() {
+  if (registroWindow && !registroWindow.closed) {
+    registroWindow.close();
+    registroWindow = null;
+    actualizarEstadoBotonesRegistro();
+  }
+}
+
+// Función para actualizar visibilidad del botón
+function actualizarEstadoBotonesRegistro() {
+  const btnCerrar = document.getElementById('btnCerrarRegistro');
+  if (btnCerrar) {
+    btnCerrar.style.display = (registroWindow && !registroWindow.closed) ? 'inline-block' : 'none';
+  }
+}
+
+// Inicializar estado de botones al cargar
+document.addEventListener('DOMContentLoaded', function() {
+  actualizarEstadoBotonesRegistro();
+});
+</script>

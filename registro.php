@@ -1,6 +1,10 @@
 <?php
 require_once 'bdd.php';
 
+// Detectar si se abrió en ventana secundaria
+$ventana_secundaria = (isset($_GET['ventana_secundaria']) && $_GET['ventana_secundaria'] == 1) || 
+                      (isset($_POST['ventana_secundaria']) && $_POST['ventana_secundaria'] == 1);
+
 function safeFormatDate($fecha) {
     if (empty($fecha)) return '-';
     $d = DateTime::createFromFormat('Y-m-d', $fecha);
@@ -172,15 +176,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </style>
   <?php if ($result): ?>
   <script>
-    setTimeout(() => location.href = 'registro.php', 8000);
+    setTimeout(() => location.href = 'registro.php<?= $ventana_secundaria ? "?ventana_secundaria=1" : "" ?>', 8000);
   </script>
   <?php endif; ?>
 </head>
 <body>
   <div class="main-card">
-    <div class="admin-link">
-      <a href="login.php" class="btn">Admin</a>
-    </div>
     <img src="logo-gym.png" alt="Bull Gym Logo" class="logo-gym">
     <h2>Consulta de Socio</h2>
     <?php if ($result): ?>
@@ -205,6 +206,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
     <?php if (!$result): ?>
       <form method="post" autocomplete="off">
+        <?php if ($ventana_secundaria): ?>
+          <input type="hidden" name="ventana_secundaria" value="1">
+        <?php endif; ?>
         <input type="text" name="dni" class="form-control" placeholder="Ingrese DNI" required maxlength="12" pattern="\d+">
         <button type="submit" class="btn btn-primary w-100">Consultar</button>
       </form>
@@ -215,18 +219,119 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </div>
 
   <?php if ($result && $result['dias_restantes'] < 0): ?>
+<audio id="error-audio" src="error.mp3" style="display:none"></audio>
 <script>
-  // Reproducir el sonido solo si el usuario ya interactuó (envió el formulario)
+  // Reproducir sonido de cuota vencida
   document.addEventListener('DOMContentLoaded', function() {
     var audio = document.getElementById('error-audio');
     if (audio) {
-      // Intenta reproducir el audio después de un pequeño delay
       setTimeout(function() {
         audio.play().catch(function(){});
       }, 200);
     }
   });
 </script>
-<?php endif; ?>         
+<?php endif; ?>
+
+<?php if ($ventana_secundaria): ?>
+<!-- Sonido de bienvenida: solo en ventana secundaria y solo si NO hay error -->
+<?php if (!$result || $result['dias_restantes'] >= 0): ?>
+<audio id="welcome-audio" src="bienvenida.mp3" style="display:none"></audio>
+<?php endif; ?>
+
+<script>
+// KIOSK MODE: Deshabilitar teclas y acciones peligrosas en pantalla de registro
+document.addEventListener('keydown', function(e) {
+  // Deshabilitar F11 (pantalla completa del navegador)
+  if (e.key === 'F11') {
+    e.preventDefault();
+    return false;
+  }
+  // Deshabilitar F12 (devtools)
+  if (e.key === 'F12') {
+    e.preventDefault();
+    return false;
+  }
+  // Deshabilitar Ctrl+Shift+I (devtools)
+  if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+    e.preventDefault();
+    return false;
+  }
+  // Deshabilitar Ctrl+Shift+J (consola)
+  if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+    e.preventDefault();
+    return false;
+  }
+  // Deshabilitar Escape (para que no salga de fullscreen fácilmente)
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    return false;
+  }
+});
+
+// Deshabilitar clic derecho
+document.addEventListener('contextmenu', function(e) {
+  e.preventDefault();
+  return false;
+});
+
+// Función para entrar en pantalla completa con reintentos
+function entrarEnPantallaCompleta() {
+  const elem = document.documentElement;
+  
+  // Métodos estándar y propietarios
+  const metodos = [
+    () => elem.requestFullscreen?.(),
+    () => elem.webkitRequestFullscreen?.(),
+    () => elem.mozRequestFullScreen?.(),
+    () => elem.msRequestFullscreen?.()
+  ];
+  
+  for (let metodo of metodos) {
+    try {
+      const promesa = metodo();
+      if (promesa instanceof Promise) {
+        promesa.catch(() => {});
+      }
+    } catch (err) {}
+  }
+}
+
+// Entrar en pantalla completa automáticamente con reintentos
+document.addEventListener('DOMContentLoaded', function() {
+  // Reproducir sonido de bienvenida (si aplica)
+  var audioWelcome = document.getElementById('welcome-audio');
+  if (audioWelcome) {
+    audioWelcome.play().catch(function(err) {
+      console.log('No se pudo reproducir sonido de bienvenida');
+    });
+  }
+  
+  // Intentar pantalla completa después de un pequeño delay
+  setTimeout(() => {
+    entrarEnPantallaCompleta();
+  }, 500);
+  
+  // Reintentar si el usuario sale de pantalla completa
+  document.addEventListener('fullscreenchange', function() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      setTimeout(() => {
+        entrarEnPantallaCompleta();
+      }, 1000);
+    }
+  });
+});
+</script>
+<?php else: ?>
+<!-- Si NO está en ventana secundaria, mostrar botón Admin -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var adminLink = document.createElement('div');
+  adminLink.className = 'admin-link';
+  adminLink.innerHTML = '<a href="login.php" class="btn">Admin</a>';
+  document.querySelector('.main-card').insertBefore(adminLink, document.querySelector('.main-card').firstChild);
+});
+</script>
+<?php endif; ?>
 </body>
 </html>
