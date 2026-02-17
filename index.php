@@ -430,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('renovar_id').value = id;
       document.getElementById('renovar_nombre').value = nom;
       document.getElementById('renovar_apellido').value = ape;
-      document.getElementById('renovar_fecha').value = insc; // o hoyYmd() si querés hoy
+      document.getElementById('renovar_fecha').value = hoyYmd(); // Usar fecha actual, no de inscripción
       // prellenar telefono si lo tenés en la BD (si almacenás tel en socios, añadir data-tel)
       document.getElementById('renovar_telefono').value = this.dataset.telefono || '';
       document.getElementById('renovar_importe').value = '';

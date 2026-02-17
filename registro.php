@@ -176,7 +176,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </style>
   <?php if ($result): ?>
   <script>
-    setTimeout(() => location.href = 'registro.php<?= $ventana_secundaria ? "?ventana_secundaria=1" : "" ?>', 8000);
+    setTimeout(() => {
+      sessionStorage.setItem('autoRedirectInProgress', 'true');
+      location.href = 'registro.php<?= $ventana_secundaria ? "?ventana_secundaria=1" : "" ?>';
+    }, 8000);
   </script>
   <?php endif; ?>
 </head>
@@ -299,12 +302,18 @@ function entrarEnPantallaCompleta() {
 
 // Entrar en pantalla completa automáticamente con reintentos
 document.addEventListener('DOMContentLoaded', function() {
-  // Reproducir sonido de bienvenida (si aplica)
+  // Reproducir sonido de bienvenida (solo si NO es un auto-redirect de 8 segundos)
   var audioWelcome = document.getElementById('welcome-audio');
   if (audioWelcome) {
-    audioWelcome.play().catch(function(err) {
-      console.log('No se pudo reproducir sonido de bienvenida');
-    });
+    if (!sessionStorage.getItem('autoRedirectInProgress')) {
+      // Reproducir sonido de bienvenida (búsqueda inicial o nueva búsqueda)
+      audioWelcome.play().catch(function(err) {
+        console.log('No se pudo reproducir sonido de bienvenida');
+      });
+    } else {
+      // Limpiar el flag del auto-redirect para la próxima búsqueda
+      sessionStorage.removeItem('autoRedirectInProgress');
+    }
   }
   
   // Intentar pantalla completa después de un pequeño delay
