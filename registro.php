@@ -212,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($ventana_secundaria): ?>
           <input type="hidden" name="ventana_secundaria" value="1">
         <?php endif; ?>
-        <input type="text" name="dni" class="form-control" placeholder="Ingrese DNI" required maxlength="12" pattern="\d+">
+        <input id="dni-input" type="text" name="dni" class="form-control" placeholder="Ingrese DNI" required maxlength="12" pattern="\d+" autofocus>
         <button type="submit" class="btn btn-primary w-100">Consultar</button>
       </form>
     <?php endif; ?>  
