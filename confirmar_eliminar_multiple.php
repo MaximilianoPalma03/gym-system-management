@@ -35,7 +35,6 @@ if (count($ids) === 0) {
 }
 
 // Si llegamos acá, mostramos la pantalla de confirmación.
-// (No listamos nombres para no sobrecargar; podés hacerlo si querés.)
 ?>
 <!DOCTYPE html>
 <html lang="es">

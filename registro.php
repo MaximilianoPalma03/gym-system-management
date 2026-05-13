@@ -243,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php endif; ?>
 
 <script>
-// KIOSK MODE: Deshabilitar teclas y acciones peligrosas en pantalla de registro
+//  Deshabilitar teclas y acciones peligrosas en pantalla de registro
 document.addEventListener('keydown', function(e) {
   // Deshabilitar F11 (pantalla completa del navegador)
   if (e.key === 'F11') {
@@ -278,7 +278,7 @@ document.addEventListener('contextmenu', function(e) {
   return false;
 });
 
-// Función para entrar en pantalla completa con reintentos
+// Función para entrar en pantalla completa con reintentos (Hecho por IA, no sé que estaría haciendo)
 function entrarEnPantallaCompleta() {
   const elem = document.documentElement;
   
@@ -300,7 +300,7 @@ function entrarEnPantallaCompleta() {
   }
 }
 
-// Entrar en pantalla completa automáticamente con reintentos
+
 document.addEventListener('DOMContentLoaded', function() {
   // Reproducir sonido de bienvenida (solo si NO es un auto-redirect de 8 segundos)
   var audioWelcome = document.getElementById('welcome-audio');
@@ -316,12 +316,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Intentar pantalla completa después de un pequeño delay
+  // Intentar pantalla completa después de un pequeño delay (Solución peruana de la IA)
   setTimeout(() => {
     entrarEnPantallaCompleta();
   }, 500);
   
-  // Reintentar si el usuario sale de pantalla completa
+  // Reintentar si el usuario sale de pantalla completa (Hecho por IA, no sé que estaría haciendo)
   document.addEventListener('fullscreenchange', function() {
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
       setTimeout(() => {

@@ -8,10 +8,10 @@ if (
     !empty($_POST['apellido']) &&
     !empty($_POST['dni'])
 ) {
-    // Sanitizar id
+
     $id = intval($_POST['id']);
 
-    // Validar que DNI sea numérico y largo adecuado
+    // Validar que DNI sea numérico y cantidad adecuada de números
     $dni = $_POST['dni'];
     if (!ctype_digit($dni)) {
         $_SESSION['msg'] = ['type' => 'danger', 'text' => 'El DNI debe contener solo números.'];

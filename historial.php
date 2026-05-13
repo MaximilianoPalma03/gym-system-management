@@ -2,7 +2,7 @@
 session_start();
 require_once 'bdd.php';
 
-// Reutilizamos safeFormatDate si lo tenés, si no agregalo:
+// formato de fecha:
 function safeFormatDate($fecha) {
     if (empty($fecha)) return '-';
     $d = DateTime::createFromFormat('Y-m-d', $fecha);

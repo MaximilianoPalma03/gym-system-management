@@ -3,7 +3,6 @@ session_start();
 require_once 'bdd.php';
 
 if (empty($_SESSION['csrf'])) {
-    // random_bytes requiere PHP 7+. Genera 64 hex chars.
     $_SESSION['csrf'] = bin2hex(random_bytes(32));
 }
 
@@ -153,7 +152,7 @@ $socios = $stmt->fetchAll();
     <a href="#" onclick="cerrarRegistroEnVentana(); return false;" class="btn btn-danger" id="btnCerrarRegistro" style="display:none;">Cerrar Registro</a>
     <!-- Toggle orden por días -->
     <?php
-      // Construir URL de toggle sin mutar baseParams
+      // Ni idea de que es esto
       $toggleParams = $baseParams;
       if ($ordenDias) {
           unset($toggleParams['orden']);

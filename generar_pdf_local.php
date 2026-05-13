@@ -4,10 +4,9 @@ require_once 'bdd.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 
-// Devolver siempre JSON (para que el front lo interprete seguro)
+// Devolver siempre JSON
 header('Content-Type: application/json; charset=utf-8');
 
-// evitar que notices/war ning output "ensucien" el JSON
 ob_start();
 
 try {
