@@ -41,7 +41,15 @@ try {
     $nombre = $s['nombre'];
     $apellido = $s['apellido'];
     $dni = $s['dni'];
+    // Tomar fecha enviada por cliente si está presente y en formato YYYY-MM-DD
     $fecha = date('Y-m-d');
+    if (!empty($_POST['fecha_renovacion'])) {
+      $fpost = $_POST['fecha_renovacion'];
+      $d = DateTime::createFromFormat('Y-m-d', $fpost);
+      if ($d && $d->format('Y-m-d') === $fpost) {
+        $fecha = $fpost;
+      }
+    }
 
  // === antes: obtener $nombre, $apellido, $dni, $telefono, $importe, $fecha
 // Generar número de recibo simple (opcional usar DB para numeración real)

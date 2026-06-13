@@ -21,7 +21,7 @@ $parcial = isset($_GET['parcial']) ? $_GET['parcial'] == '1' : ($s['parcial'] ==
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editar Socio</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
 <div class="container mt-5">
@@ -42,11 +42,15 @@ $parcial = isset($_GET['parcial']) ? $_GET['parcial'] == '1' : ($s['parcial'] ==
     </div>
      <div class="mb-3">
       <label class="form-label">Fecha de inscripción</label>
-      <input type="date" name="fecha_inscripcion" class="form-control" required value="<?=htmlspecialchars($fecha_inscripcion)?>">
+      <input type="hidden" name="fecha_inscripcion" id="fecha_inscripcion" value="<?=htmlspecialchars($fecha_inscripcion)?>">
+      <input type="text" id="fecha_inscripcion_display" class="form-control" required value="<?=htmlspecialchars((new DateTime($fecha_inscripcion))->format('d/m/Y'))?>">
+      <div class="form-text">Formato: dd/mm/yyyy</div>
     </div>
     <div class="mb-3">
       <label class="form-label">Fecha de vencimiento</label>
-      <input type="date" name="fecha_vencimiento" class="form-control" required value="<?=htmlspecialchars($fecha_vencimiento)?>">
+      <input type="hidden" name="fecha_vencimiento" id="fecha_vencimiento" value="<?=htmlspecialchars($fecha_vencimiento)?>">
+      <input type="text" id="fecha_vencimiento_display" class="form-control" required value="<?=htmlspecialchars((new DateTime($fecha_vencimiento))->format('d/m/Y'))?>">
+      <div class="form-text">Formato: dd/mm/yyyy</div>
     </div>
     <div class="form-check form-switch mb-4">
       <input class="form-check-input" type="checkbox" id="parcial" name="parcial" value="1" <?= $parcial ? 'checked' : '' ?>>
@@ -56,5 +60,55 @@ $parcial = isset($_GET['parcial']) ? $_GET['parcial'] == '1' : ($s['parcial'] ==
     <a href="index.php" class="btn btn-secondary ms-2">Cancelar</a>
   </form>
 </div>
-</body>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  function ymdToDmy(ymd) {
+    try {
+      const parts = ymd.split('-');
+      if (parts.length !== 3) return '';
+      return [parts[2], parts[1], parts[0]].join('/');
+    } catch (e) { return ''; }
+  }
+  function dmyToYmd(dmy) {
+    const parts = dmy.split('/');
+    if (parts.length !== 3) return '';
+    const d = parts[0].padStart(2,'0');
+    const m = parts[1].padStart(2,'0');
+    const y = parts[2];
+    return [y, m, d].join('-');
+  }
+
+  const insHidden = document.getElementById('fecha_inscripcion');
+  const insDisplay = document.getElementById('fecha_inscripcion_display');
+  const venHidden = document.getElementById('fecha_vencimiento');
+  const venDisplay = document.getElementById('fecha_vencimiento_display');
+
+  if (insHidden && insDisplay) insDisplay.value = ymdToDmy(insHidden.value) || insDisplay.value;
+  if (venHidden && venDisplay) venDisplay.value = ymdToDmy(venHidden.value) || venDisplay.value;
+
+  function attachSync(displayEl, hiddenEl) {
+    displayEl.addEventListener('blur', function () {
+      const ymd = dmyToYmd(this.value);
+      if (ymd) hiddenEl.value = ymd;
+    });
+    displayEl.addEventListener('input', function () {
+      const ymd = dmyToYmd(this.value);
+      if (ymd) hiddenEl.value = ymd;
+    });
+  }
+
+  if (insDisplay && insHidden) attachSync(insDisplay, insHidden);
+  if (venDisplay && venHidden) attachSync(venDisplay, venHidden);
+
+  const form = document.querySelector('form[action="actualizar_socio.php"]');
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      if (!insHidden.value || !/^\d{4}-\d{2}-\d{2}$/.test(insHidden.value) || !venHidden.value || !/^\d{4}-\d{2}-\d{2}$/.test(venHidden.value)) {
+        e.preventDefault();
+        alert('Las fechas deben ingresarse en formato dd/mm/yyyy (ej: 13/06/2026).');
+      }
+    });
+  }
+});
+</script>
 </html>

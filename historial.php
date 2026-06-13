@@ -26,20 +26,36 @@ $totalSocios = $countStmt->fetchColumn();
 $totalPaginas = max(1, ceil($totalSocios / $porPagina));
 
 // Consulta principal:
+// Detectar si la columna `fecha_alta` existe en la tabla `socios`.
+$colStmt = $conexion->prepare(
+  "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'socios' AND COLUMN_NAME = :col"
+);
+$colStmt->execute([':col' => 'fecha_alta']);
+$hasFechaAlta = $colStmt->fetch() !== false;
+
 // Traemos datos del socio y el historial concatenado (GROUP_CONCAT). ORDER BY depende de $orden.
+if ($hasFechaAlta) {
+    $fechaExpr = 's.fecha_alta';
+    $groupByExtra = 's.fecha_alta';
+} else {
+    $fechaExpr = 's.fecha_inscripcion';
+    $groupByExtra = 's.fecha_inscripcion';
+}
+
 $sql = "
 SELECT
   s.id,
   s.nombre,
   s.apellido,
   s.dni,
-  s.fecha_alta,
+  {$fechaExpr} AS fecha_alta,
   MAX(r.fecha_renovacion) AS ultima_renovacion,
   GROUP_CONCAT(DATE_FORMAT(r.fecha_renovacion, '%Y-%m-%d') ORDER BY r.fecha_renovacion DESC SEPARATOR ',') AS historial
 FROM socios s
 LEFT JOIN renovaciones r ON r.socio_id = s.id
 " . ($filtroDni ? " WHERE s.dni = :dni " : "") . "
-GROUP BY s.id, s.nombre, s.apellido, s.dni, s.fecha_alta
+GROUP BY s.id, s.nombre, s.apellido, s.dni, {$groupByExtra}
 ORDER BY s.apellido, s.nombre
 LIMIT :limit OFFSET :offset
 ";
@@ -57,7 +73,7 @@ $filas = $stmt->fetchAll();
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Historial de Renovaciones</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/bootstrap.min.css" rel="stylesheet">
   <style>
     .small-hist { max-width: 600px; white-space: normal; word-wrap: break-word; }
   </style>

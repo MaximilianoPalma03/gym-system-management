@@ -23,9 +23,9 @@ if (
 
     try {
         $sql = "INSERT INTO socios
-                (nombre, apellido, dni, fecha_inscripcion, fecha_vencimiento, parcial, fecha_alta)
+                (nombre, apellido, dni, fecha_inscripcion, fecha_vencimiento, parcial)
                 VALUES
-                (:n, :a, :dni, :fi, :fv, :parcial, :fa)";
+                (:n, :a, :dni, :fi, :fv, :parcial)";
         $stmt = $conexion->prepare($sql);
         $stmt->execute([
             ':n'   => $_POST['nombre'],
@@ -33,8 +33,7 @@ if (
             ':dni' => $dni,
             ':fi'  => $inscripcion,
             ':fv'  => $vencimiento,
-            ':parcial' => $parcial,
-            ':fa' => $inscripcion
+            ':parcial' => $parcial
         ]);
 
         $lastId = $conexion->lastInsertId();
@@ -61,7 +60,9 @@ if (
             exit;
         } else {
             error_log('Error insertar_socio: ' . $e->getMessage());
-            header('Location: agregar_socio.php?error=otro');
+            // En modo desarrollo redirigimos con el mensaje para debug local
+            $msg = rawurlencode($e->getMessage());
+            header('Location: agregar_socio.php?error=debug&msg=' . $msg);
             exit;
         }
     }

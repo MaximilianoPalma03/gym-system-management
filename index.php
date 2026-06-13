@@ -82,7 +82,7 @@ $socios = $stmt->fetchAll();
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Socios del Gimnasio</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/bootstrap.min.css" rel="stylesheet">
 
    <style>
     .logo-gym {
@@ -297,7 +297,9 @@ $socios = $stmt->fetchAll();
           </div>
           <div class="mb-2">
             <label class="form-label">Fecha (hoy)</label>
+            <input type="hidden" name="fecha_renovacion" id="renovar_fecha_hidden">
             <input type="text" id="renovar_fecha" class="form-control" readonly>
+            <div class="form-text">Formato: dd/mm/yyyy</div>
           </div>
           <div class="mb-2">
             <label class="form-label">Teléfono</label>
@@ -325,7 +327,7 @@ $socios = $stmt->fetchAll();
 </div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const selectAll = document.getElementById('select-all');
@@ -429,7 +431,17 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('renovar_id').value = id;
       document.getElementById('renovar_nombre').value = nom;
       document.getElementById('renovar_apellido').value = ape;
-      document.getElementById('renovar_fecha').value = hoyYmd(); // Usar fecha actual, no de inscripción
+      // Set both hidden (Y-m-d) and visible (d/m/Y) fecha
+      const hoy = hoyYmd();
+      document.getElementById('renovar_fecha_hidden').value = hoy;
+      // formatear a dd/mm/yyyy
+      (function setDisplay(dstr){
+        try{
+          const parts = dstr.split('-');
+          if(parts.length===3) document.getElementById('renovar_fecha').value = [parts[2],parts[1],parts[0]].join('/');
+          else document.getElementById('renovar_fecha').value = dstr;
+        }catch(e){ document.getElementById('renovar_fecha').value = dstr; }
+      })(hoy);
       // prellenar telefono si lo tenés en la BD (si almacenás tel en socios, añadir data-tel)
       document.getElementById('renovar_telefono').value = this.dataset.telefono || '';
       document.getElementById('renovar_importe').value = '';
