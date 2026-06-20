@@ -33,11 +33,11 @@ $fecha_vencimiento = $_GET['fecha_vencimiento'] ?? $venc;
   <form action="insertar_socio.php" method="POST">
     <div class="mb-3">
       <label for="nombre" class="form-label">Nombre</label>
-      <input type="text" name="nombre" id="nombre" class="form-control" required>
+      <input type="text" name="nombre" id="nombre" class="form-control" style="text-transform: uppercase;" required>
     </div>
     <div class="mb-3">
       <label for="apellido" class="form-label">Apellido</label>
-      <input type="text" name="apellido" id="apellido" class="form-control" required>
+      <input type="text" name="apellido" id="apellido" class="form-control" style="text-transform: uppercase;" required>
     </div>
     <div class="mb-3">
       <label for="dni" class="form-label">DNI</label>
@@ -121,6 +121,20 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  const nombreInput = document.getElementById('nombre');
+  const apellidoInput = document.getElementById('apellido');
+  function forceUpperCase(field) {
+    if (!field) return;
+    field.addEventListener('input', function () {
+      const pos = this.selectionStart;
+      this.value = this.value.toUpperCase();
+      this.setSelectionRange(pos, pos);
+    });
+  }
+
+  forceUpperCase(nombreInput);
+  forceUpperCase(apellidoInput);
 });
 </script>
 </html>

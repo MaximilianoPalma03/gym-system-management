@@ -19,6 +19,10 @@ if (
         exit;
     }
 
+    // Estándar de mayúsculas para nombre y apellido
+    $nombre = mb_strtoupper(trim($_POST['nombre']), 'UTF-8');
+    $apellido = mb_strtoupper(trim($_POST['apellido']), 'UTF-8');
+
     try {
         $parcial = isset($_POST['parcial']) && $_POST['parcial'] == '1' ? 1 : 0;
 
@@ -32,8 +36,8 @@ if (
                 WHERE id = :id";
         $stmt = $conexion->prepare($sql);
         $stmt->execute([
-            ':n'   => $_POST['nombre'],
-            ':a'   => $_POST['apellido'],
+            ':n'   => $nombre,
+            ':a'   => $apellido,
             ':dni' => $dni,
             ':fi'  => $_POST['fecha_inscripcion'],
             ':fv'  => $_POST['fecha_vencimiento'],

@@ -30,11 +30,11 @@ $parcial = isset($_GET['parcial']) ? $_GET['parcial'] == '1' : ($s['parcial'] ==
     <input type="hidden" name="id" value="<?=$s['id']?>">
     <div class="mb-3">
       <label class="form-label">Nombre</label>
-      <input type="text" name="nombre" class="form-control" value="<?=htmlspecialchars($s['nombre'])?>" required>
+      <input type="text" name="nombre" id="nombre" class="form-control" style="text-transform: uppercase;" value="<?=htmlspecialchars($s['nombre'])?>" required>
     </div>
     <div class="mb-3">
       <label class="form-label">Apellido</label>
-      <input type="text" name="apellido" class="form-control" value="<?=htmlspecialchars($s['apellido'])?>" required>
+      <input type="text" name="apellido" id="apellido" class="form-control" style="text-transform: uppercase;" value="<?=htmlspecialchars($s['apellido'])?>" required>
     </div>
     <div class="mb-3">
       <label class="form-label">DNI</label>
@@ -109,6 +109,20 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  const nombreInput = document.querySelector('input[name="nombre"]');
+  const apellidoInput = document.querySelector('input[name="apellido"]');
+  function forceUpperCase(field) {
+    if (!field) return;
+    field.addEventListener('input', function () {
+      const pos = this.selectionStart;
+      this.value = this.value.toUpperCase();
+      this.setSelectionRange(pos, pos);
+    });
+  }
+
+  forceUpperCase(nombreInput);
+  forceUpperCase(apellidoInput);
 });
 </script>
 </html>
