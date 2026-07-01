@@ -1,0 +1,27 @@
+# PHPDesktop binarios pesados
+libcef.dll
+icudtl.dat
+snapshot_blob.bin
+v8_context_snapshot.bin
+chrome_100_percent.pak
+chrome_200_percent.pak
+resources.pak
+chrome_elf.dll
+d3dcompiler_47.dll
+dxcompiler.dll
+dxil.dll
+libEGL.dll
+libGLESv2.dll
+vk_swiftshader.dll
+vk_swiftshader_icd.json
+vulkan-1.dll
+phpdesktop-chrome_original.exe
+webcache/
+debug.log
+locales/
+
+# Vendor (se regenera con composer)
+www/vendor/
+www/comprobantes/vendor/
+www/php_modificados.zip
+php/
