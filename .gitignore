@@ -1,0 +1,8 @@
+# Runtime PHPDesktop / CEF - no versionar
+*.exe
+*.dll
+*.pak
+*.bin
+*.dat
+webcache/
+debug.log
